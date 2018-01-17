@@ -1,3 +1,4 @@
+//Headers
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -9,7 +10,39 @@
 #include <ctime>
 #include <windows.h>
 
+
+
+//Date
+struct date{
+	bool isEmpty;
+	int year;
+	int month;
+	int day;
+	
+	date(){
+		isEmpty=true;
+	}
+	date(int y, int m, int d){
+		year=y;
+		month=m;
+		day=d;
+		isEmpty=false;
+	}
+};
+
+
+
+//Generals
+const int MAX_GAMES = 200;
+extern char* DATA_FILE_NAME;
+extern char* NULL_PATH_STRING;
+extern bool IS_SAVED;
+
 using namespace std;
+
+int doubleToInt(double);
+int compareDoubleDecimals(double,double);
+bool isInt(double);
 
 void beforeStrWhere(const char*,int);
 void beforeStrWhere(stringstream &,int);
@@ -30,6 +63,7 @@ void setColor(int,bool);
 void setColor(int);
 void setColor(const char *);
 bool randYesNo();
+int findIndexInIntArray(int,int *,int);
 
 class player;
 class team;
@@ -59,11 +93,11 @@ bool mainMenu(team&,team&,match *,inputProfile&,const char*);
 bool enterTeams(team&,team&);
 int generateNewPrId(team,team);
 int choiceMatch(match *,team,team);
-void externalShowAllPrs(const char *);
+void externalShowAllPrs(const char*);
 int getNumGames(match *);
 void add_game(match *,team &,team &, inputProfile &);
 void editGame(match *,team &,team &);
-void showWALTable(teamGameStat, teamGameStat , bool, bool);
+void showWALTable(teamGameStat, teamGameStat , bool, bool, bool);
 void print_passage(char *);
 void details_repair(match *, team &,team &);
 void silentDetailsRepair(match *, team &,team &);
@@ -74,15 +108,10 @@ void moratab(int[][3],int,int,int);
 void newTermPlayers(team,team,match *);
 void correctData(team &, team &, match *,inputProfile&);
 
-int stringToInt(char []);
-int nextInt();
-bool printCheckChoice (int,int,int);
-bool easycheck (int, int, int);
-bool ukEasycheck (int, int, int,bool);
-bool ukEasycheck (int, int, int);
-int inputChoice(int,int);
-bool sure();
 
+
+
+//Print
 void printError(const char*);
 void sucPrint(const char*);
 void rulePrint(const char*);
@@ -95,30 +124,23 @@ void boldGreenPrint(const char*);
 void boldRedPrint(const char*);
 
 
-char* DATA_FILE_NAME;
-char* NULL_PATH_STRING;
-char* EXE_APP_NAME;
-bool IS_SAVED;
 
 
-struct date{
-	bool isEmpty;
-	int year;
-	int month;
-	int day;
-	
-	date(){
-		isEmpty=true;
-	}
-	date(int y, int m, int d){
-		year=y;
-		month=m;
-		day=d;
-		isEmpty=false;
-	}
-};
+//Input
+int stringToInt(char []);
+int nextInt();
+bool printCheckChoice (int,int,int);
+bool easycheck (int, int, int);
+bool ukEasycheck (int, int, int,bool);
+bool ukEasycheck (int, int, int);
+int inputChoice(int,int);
+bool sure();
 
 
+
+
+
+//InputProfile
 class inputProfile{
     bool numCards;
     bool date;
@@ -287,146 +309,9 @@ class inputProfile{
 };
 
 
-class FileNames{
-    int length;
-    string fn[300];
-    
-	public:
-    
-    FileNames(){
-        length=0;
-    }
-    
-    void delOlds(){
-        if(length<=200) return;
-        int step=length-200;
-        for(int i=0; 200>i; i++){
-            fn[i]=fn[i+step];
-        }
-        length=200;
-    }
-    
-    bool choiceMenu(char* inputFN){
-        int printIndex=0;
-        int choice;
-        string isfd[300];
-        
-        start:
-        cout<<endl;
-        setColor("BOLDBLUE");
-        cout<<"Load:\n";
-        setColor("RESET");
-        for(int i=0; length>i; i++){
-            char tempFN[256];
-            strcpy(tempFN,fn[i].c_str());
-            if(isDataFile(tempFN)){
-                isfd[printIndex]=fn[i];
-                setColor("BOLDBLUE");
-                cout<<++printIndex<<": ";
-                setColor("RESET");
-                cout<<fn[i]<<endl;
-            }
-        }
-        
-        setColor("BOLDBLUE");
-        cout<<printIndex+1<<": ";
-        setColor("RESET");
-        cout<<"Enter Another File Name\n";
-        setColor("BOLDBLUE");
-        cout<<printIndex+2<<": ";
-        setColor("RESET");
-        cout<<"Cancel\n";
-        cout<<endl<<"Enter Your Choice: ";
-        choice=inputChoice(1,printIndex+2);
-        
-        if(choice<=printIndex){
-            strncpy(inputFN,isfd[choice-1].c_str(),256);
-            append(inputFN);
-            return true;
-        }
-        else if(choice==printIndex+1){
-            userinput:
-            char userFN[256];
-            cout<<endl<<"Enter File Name: ";
-            cin.getline(userFN,256);
-            if(isDataFile(userFN)){
-                string str(userFN);
-                append(str);
-                strncpy(inputFN,userFN,256);
-                return true;
-            }
-            else{
-                cout<<endl;
-                if(existFile(userFN)) printError("Invalid File!\n");
-                else printError("File Not Found!\n");
-                cout<<endl;
-                setColor("BOLDRED");
-                cout<<"Next Work?\n";
-                setColor("RESET");
-                cout<<"1: Try Again\n";
-                cout<<"2: Go to File Names Menu\n";
-                cout<<"3: Cancel\n";
-                cout<<endl;
-                cout<<"Enter Your Choice: ";
-                int choice=inputChoice(1,3);
-                if(choice==1) goto userinput;
-                else if(choice==2) goto start;
-                else return false;
-            }
-        }
-        
-        else if(choice==printIndex+2) return false;
-        
-        throw -1;
-    }
-    
-    void append(string str){
-        if(length==299) delOlds();
-        int index;
-        for(index=0; length>index && fn[index].compare(str)!=0; index++);
-        if(index<length){
-            for(int i=index; i>0; i--){
-                fn[i]=fn[i-1];
-            }
-            fn[0]=str;
-        }
-        else{
-            fn[index]=str;
-            length++;
-        }
-        save();
-    }
-    
-    void save(){
-        fstream f1("configs.bin" , ios::out | ios::binary);
-        f1.write(reinterpret_cast<char *>(&length), sizeof(length));
-        for(int i=0; length>i; i++){
-            int size = (fn[i].size());
-            f1.write(reinterpret_cast<char *>(&size), sizeof(int));
-            f1.write(fn[i].c_str(), size);
-	}
-        f1.close();
-    }
-    
-    void load(){
-        fstream f1("configs.bin" , ios::in | ios::binary);
-        if(f1){
-            f1.read(reinterpret_cast<char *>(&length), sizeof(length));
-            for(int i=0; length>i; i++){
-                int size;
-                char *buf;
-                f1.read(reinterpret_cast<char *>(&size), sizeof(int));
-                buf = new char[size];
-                f1.read(buf, size);
-                fn[i] = "";
-                fn[i].append(buf, size);
-            }
-            f1.close();
-        }
-    }
-};
 
 
+//Player
 class player{
 	bool exist;
 	char name[30];
@@ -664,6 +549,9 @@ class player{
 };
 
 
+
+
+//Team
 class team{
 	static int count;
 	bool exist;
@@ -866,6 +754,10 @@ class team{
 	char* getName(){return name;}
 	void printname(void){ cout<<name;}
 	
+	void sortPrsByDebut(match *);
+	void showSqadList(match *);
+	void teamManage(team,match *);
+	
 	void show(void){
 		setColor("BOLDRED");
 		cout<<"\nName: "<<name;
@@ -981,61 +873,6 @@ class team{
 		space(s); ccsPrint(cadr); cadr_dash(maxLength); setColor("RESET");
 	}
 	
-	void showSqadList(void){
-		if(pr[0].sendexist()==0) cout<<"\nThis team till now have not any players\n";
-		else{
-			while(true){
-				setColor("BOLDGREEN");
-				cout<<"\nSquad List:\n";
-				setColor("RESET");
-				for(int i=0; pr[i].exist!=0; i++){
-					pr[i].namePostShow();
-					cout<<endl;
-				}
-				
-				int num=0;
-				cout<<endl;
-				setColor("BOLDRED");
-				cout<<"Next Work?"<<endl;
-				setColor("RESET");
-				cout<<++num<<": Show a Player Details\n";
-				cout<<++num<<": Sort by Numbers\n";
-				cout<<++num<<": Sort by Posts\n";
-				cout<<++num<<": Sort by Overall Ratings\n";
-				cout<<++num<<": Back To Team Menu\n";
-				cout<<"Enter Your Choice: ";
-				int choice=inputChoice(1,num);
-				if(choice==1){
-					show_a_player:
-					int ind;
-					cout<<endl<<"Enter Player Club Number: ";
-					ind=nextInt();
-					
-					try{
-						getPrFromNumber(ind).show();
-					}
-					catch(int ex){
-						cout<<endl<<"There is no Player with this Number!"<<endl;
-					}
-					
-					cout<<endl;
-					setColor("BOLDRED");
-					cout<<"Next Work?"<<endl;
-					setColor("RESET");
-					cout<<"1: Show Squad List\n2: Show another Player Details\n3: Back To Team Menu\n";
-					cout<<"Enter Your Choice: ";
-					int choice=inputChoice(1,3);
-					if(choice==2) goto show_a_player;
-					else if(choice==3) return;
-				}
-				else if(choice==2) sortPrs("number");
-				else if(choice==3) sortPrs("post");
-				else if(choice==4) sortPrs("overallRating",true);
-				else if(choice==5) return;
-			}
-		}
-	}
-	
 	void show_det_prs(void){
 		if(pr[0].sendexist()==0) cout<<"\nThis team till now have not any players\n";
 		else{
@@ -1106,7 +943,7 @@ class team{
 		return pr[index].sendapps()<=0;
 	}
         
-    void inputPrDetails(char nameVar[],int& post,int index){
+    void inputPrDetails(char nameVar[],int& post,int& number,int index){
         input:
         cout<<"\nPlayer "<<index+1 <<":\n";
 		cout<<"Enter Name: ";
@@ -1120,10 +957,16 @@ class team{
 		}
         cout<<"Enter Post (1-5): ";
         post=inputChoice(1,5);
+		if(number==-1){
+			cout<<"Enter Shirt Number (0 To Random): ";
+			number=inputChoice(0,200);
+			if(number==0) number=generateRandomNumber(post);
+		}
     }
 	
 	void add_prs(team other){
-		int choice,i,post;
+		int choice,i,post,number;
+		int numSecond;
 		char nameVar[30];
 		do{
 			for(i=0; pr[i].sendexist()!=0; i++);
@@ -1133,22 +976,36 @@ class team{
 			}
                         
             input:
-			inputPrDetails(nameVar,post,i);
+            numSecond=-1;
+			number=-1;
+			inputPrDetails(nameVar,post,number,i);
                         
             setColor("BOLDBLUE");
             cout<<endl<<"Name: "<<nameVar<<" | Post: ";
             player::printPost(post);
-            cout<<endl;
+			setColor("BOLDBLUE");
+			cout<<" | Number: ";
+			setColor("BOLDMAGENTA");
+			cout<<number<<endl;
+			setColor("RESET");
+			if(existNumber(number)){
+				numSecond=generateRandomNumber(getPrFromNumber(number).getPost());
+				typeWarning();
+				cout<<getPrFromNumber(number).sendname()<<": "<<number<<" -> "<<numSecond<<endl;
+			}
                         
             setColor("BOLDRED");
             cout<<endl<<"Next Work?\n";
             setColor("RESET");
-            cout<<"1: Enter Another Player\n2: Edit\n3: Refuse Last Entry And Back\n4: Apply And Back To Recent Menu\n\n";
+            cout<<"1: Apply And Enter Another Player\n2: Edit Entry\n3: Refuse Last Entry And Back\n4: Apply And Back To Recent Menu\n\n";
             cout<<"Enter Your Choice: ";
             choice=inputChoice(1,4);
             if(choice==2) goto input;
             if(choice==3) return;
-			pr[i].input(nameVar,post,generateRandomNumber(post),generateNewPrId(*this,other));
+			if(numSecond!=-1){
+				getPrFromNumber(number).setNumber(numSecond);
+			}
+			pr[i].input(nameVar,post,number,generateNewPrId(*this,other));
             IS_SAVED=false;
 		} while(choice==1);
 	}
@@ -1256,7 +1113,7 @@ class team{
         setColor("BOLDRED");
         cout<<"Next Work?\n";
         setColor("RESET");
-        cout<<"1: Edit This Player\n";
+        cout<<"1: Edit Name And Post\n";
         cout<<"2: Change Number\n";
         if(prAllowDelete(index)){
             canDel=1;
@@ -1274,8 +1131,9 @@ class team{
         else if(choice==1){
 			char nameVar[30];
             int post;
+			int num=getPrFromIndex(index).getNumber();
             input:
-			inputPrDetails(nameVar,post,index);
+			inputPrDetails(nameVar,post,num,index);
             cout<<endl;      
             setColor("BOLDBLUE");
             cout<<endl<<"Name: "<<nameVar<<" | Post: ";
@@ -1388,37 +1246,7 @@ class team{
         }
             
     }
-        
-	void teamManage(team other){
-		int choice;
-		while(1){
-			cout<<"\n";
-			setColor("BOLDRED");
-			printname();
-			cout<<" Session:\n";
-			setColor("RESET");
-			cout<<"1: Show Team Results\n";
-			cout<<"2: Add Players\n";
-			cout<<"3: Edit Players\n";
-			cout<<"4: Change Player Numbers\n";
-			cout<<"5: Show Squad List \n";
-			cout<<"6: Show Detailed Player List\n";
-			cout<<"7: Back to main\n";
-			
-			cout<<endl<<"Enter your choice: ";
-			choice=inputChoice(1,7);
-			
-			switch(choice){
-				case 1: show(); break;
-				case 2: add_prs(other); break;
-				case 3: editPrs(other); break;
-				case 4: editPrNumbers(); break;
-				case 5: showSqadList(); break;
-				case 6: show_det_prs(); break;
-			}
-			if (choice==7) break;
-		}
-	}
+
         
 	friend class match;
 	friend class competition;
@@ -1428,6 +1256,9 @@ class team{
 };
 
 
+
+
+//TeamGStat
 struct teamGameStat{
 	char name[40];
 	double nSub;
@@ -1442,6 +1273,8 @@ struct teamGameStat{
 	double interc;
 	double tackles;
 	double saves;
+	double sOverall;
+	double sFOverall;
 	double nCards[2];
 	
 	//teamGameStat(){}
@@ -1450,11 +1283,13 @@ struct teamGameStat{
 		nSub=defValue; nGoals=defValue; possess=defValue; shots[0]=defValue; shots[1]=defValue;
 		fouls[0]=defValue; fouls[1]=defValue; corners=defValue; fk=defValue; passC=defValue;
 		cross=defValue; interc=defValue; tackles=defValue; saves=defValue; nCards[0]=defValue; nCards[1]=defValue;
+		sOverall=defValue; sFOverall=defValue;
 	}
 	
 	bool isComplete(){
 		if(nSub>=0 && nGoals>=0 && possess>=0 && shots[0]>=0 && shots[1]>=0 && fouls[0]>=0 && fouls[1]>=0 && corners>=0
-		&& fk>=0 && passC>=0 && cross>=0 && interc>=0 && tackles>=0 && saves>=0 && nCards[0]>=0 && nCards[1]>=0){
+		&& fk>=0 && passC>=0 && cross>=0 && interc>=0 && tackles>=0 && saves>=0 && nCards[0]>=0 && nCards[1]>=0
+		&& sOverall>=0 && sFOverall>=0){
 			return true;
 		}
 		return false;
@@ -1483,10 +1318,15 @@ struct teamGameStat{
 		else{ nCards[0]=-2; nCards[1]=-2;}
 		
 		if(number[++num]>0){ nSub/=number[num];} else{ nSub=-2;}
+		if(number[++num]>0){ sFOverall/=number[num];} else{ sFOverall=-2;}
+		if(number[++num]>0){ sOverall/=number[num];} else{ sOverall=-2;}
 	}
 };
 
 
+
+
+//Match
 class match{
     public:
 	bool exist;
@@ -1904,10 +1744,13 @@ class match{
     }
     
     void printOverallsPrs(team tm1,team tm2){
-        const int scrLength=90;
-        int t,c,s;
+		int maxLength;
+		int scrLength;
+        int t,s;
 		stringstream ts1[14];
 		stringstream ts2[14];
+		stringstream ov1,ov2;
+		stringstream ovf1,ovf2;
         stringstream cadr;
 
 		for(int i=0; 14>i; i++){
@@ -1962,14 +1805,33 @@ class match{
                 }
             }
 		}
+		
+		double t1FirstStrength=getTeamFirstStrength(tm1);
+		double t2FirstStrength=getTeamFirstStrength(tm2);
+		double t1Strength=getTeamStrength(tm1);
+		double t2Strength=getTeamStrength(tm2);
+		
+		if(t1FirstStrength!=-2) ovf1<<"FL Strength: "<<player::getOverallString(t1FirstStrength);
+		else ovf1<<"FL Strength: "<<player::getOverallString(-2);
+		
+		if(t2FirstStrength!=-2) ovf2<<"FL Strength: "<<player::getOverallString(t2FirstStrength);
+		else ovf2<<"FL Strength: "<<player::getOverallString(-2);
+
+		if(t1Strength!=-2) ov1<<"Strength: "<<player::getOverallString(t1Strength);
+		else ov1<<"Strength: "<<player::getOverallString(-2);
+		
+		if(t2Strength!=-2) ov2<<"Strength: "<<player::getOverallString(t2Strength);
+		else ov2<<"Strength: "<<player::getOverallString(-2);
 
 		cout<<endl<<endl;
 
         cadr<<"$$BLU";
+		s=8; t=26;
+		scrLength=(s*2)+(t*2);
+		maxLength=(t*2)+2;
+		
 		setColor("BOLDBLUE"); beforeStrWhere("Players Overalls Ratings",scrLength); setColor("RESET");cout<<endl;
-		s=21; t=23;
-		c=2+(t*2);
-		space(s); ccsPrint(cadr); cadr_dash(c,true); setColor("RESET");cout<<endl;
+		space(s); ccsPrint(cadr); cadr_dash(maxLength,true); setColor("RESET");cout<<endl;
 		for(int i=0; 11>i; i++){
             space(s); ccsPrint(cadr); cout<<"|"; setColor("RESET");
             strwhere(ts1[i],t,1);
@@ -1977,14 +1839,24 @@ class match{
             ccsPrint(cadr); cout<<"|"; setColor("RESET"); cout<<endl; 
 		}
 		
-		space(s); ccsPrint(cadr); cadr_dash(c,true); setColor("RESET");cout<<endl;
+		space(s); ccsPrint(cadr); cadr_dash(maxLength,true); setColor("RESET");cout<<endl;
 		for(int i=11; 14>i; i++){
             space(s); ccsPrint(cadr); cout<<"|"; setColor("RESET");
             strwhere(ts1[i],t,1);
             strwhere(ts2[i],t,1);
             ccsPrint(cadr); cout<<"|"; setColor("RESET");cout<<endl;		
 		}
-		space(s); ccsPrint(cadr); cadr_dash(c,true); setColor("RESET");cout<<endl;
+		space(s); ccsPrint(cadr); cadr_dash(maxLength,true); setColor("RESET");cout<<endl;
+		
+		space(s); ccsPrint(cadr); cout<<"|"; setColor("RESET");
+		strwhere(ovf1,t,1); strwhere(ovf2,t,1);
+		ccsPrint(cadr); cout<<"|"; setColor("RESET");cout<<endl;
+			
+		space(s); ccsPrint(cadr); cout<<"|"; setColor("RESET");
+		strwhere(ov1,t,1); strwhere(ov2,t,1);
+		ccsPrint(cadr); cout<<"|"; setColor("RESET");cout<<endl;
+			
+		space(s); ccsPrint(cadr); cadr_dash(maxLength,true); setColor("RESET");cout<<endl;
     }
     
     void setOverallPrs(team tm1,team tm2,bool edit=false){
@@ -2169,37 +2041,69 @@ class match{
             printOverallsPrs(tm1,tm2);
         }
     }
-    
-    double getTeamStrength(team tm){
+	
+	double getTeamStrength(int tmId){
 		int sum=0;
 		int *pov;
 		int *tov;
 		int tt;
 		int num;
 		
-		if(tm.sendid()==1){
+		if(tmId==1){
 			pov=t1_pov;
 			tov=t1_tov;
 			tt=t1_tt;
 		}
-		else if(tm.sendid()==2){
+		else if(tmId==2){
 			pov=t2_pov;
 			tov=t2_tov;
 			tt=t2_tt;	
 		}
+		else throw -1;
+		
 		num=11+tt;
 		
 		for(int i=0; 11>i; i++){
 			if(pov[i]>0) sum+=pov[i];
-			else return -1;
+			else return -2;
 		}
 		
 		for(int i=0; tt>i; i++){
 			if(tov[i]>0) sum+=tov[i];
-			else return -1;
+			else return -2;
 		}
 		return (double)sum/num;
 	}
+	
+    double getTeamStrength(team tm){
+		if(tm.sendid()==1) return getTeamStrength(1);
+		else if(tm.sendid()==2) return getTeamStrength(2);
+		throw -1;
+	}
+	
+	
+    double getTeamFirstStrength(int tmId){
+		int sum=0;
+		int *pov;
+		int num;
+		
+		if(tmId==1) pov=t1_pov;
+		else if(tmId==2) pov=t2_pov;
+		num=11;
+		
+		for(int i=0; 11>i; i++){
+			if(pov[i]>0) sum+=pov[i];
+			else return -2;
+		}
+		return (double)sum/num;
+	}
+	
+    double getTeamFirstStrength(team tm){
+		if(tm.sendid()==1) return getTeamFirstStrength(1);
+		else if(tm.sendid()==2) return getTeamFirstStrength(2);
+		throw -1;
+	}
+	
 	
 	int ** getPlayersStats(){
 		int ** prStats;
@@ -2367,7 +2271,7 @@ class match{
 				setColor("BOLDRED");
 				cout<<"\nNext Work?\n";
 				setColor("RESET");
-				cout<<"1:Try Again\n2: Edit Game Input Settings\n3: Go to Number of Goals Session\n";
+				cout<<"1: Try Again\n2: Edit Game Input Settings\n3: Go to Number of Goals Session\n";
 				cout<<"4: Go to Line Up Session\n";
 				cout<<"\nEnter Your Choice: ";
 				choice =inputChoice(1,4);
@@ -2382,12 +2286,13 @@ class match{
 				}
 				else if(choice==4){
 					setColor("BOLDRED");
-					cout<<"Works:\n";
+					cout<<"\nWorks:\n";
 					setColor("RESET");
 					cout<<"1: Enter Complete Teams Line Ups\n";
 					cout<<"2: Enter "<<tm1.getName()<<" Line Up\n";
 					cout<<"3: Enter "<<tm2.getName()<<" Line Up\n";
 					cout<<"4: Cancel And Try Again to Entering Goal\n";
+					cout<<"\nEnter Your Choice: ";
 					choice=inputChoice(1,4);
 					if(choice==1){
 						setFirstLineup(tm1);
@@ -2408,8 +2313,9 @@ class match{
 				cout<<endl;
 			}
 			
-			first=false;
 			if(!first) cout<<"Enter The Card: ";
+			first=false;
+			
 			temp[0]=nextInt();
 			temp[1]=nextInt();
 			temp[2]=nextInt();
@@ -2571,7 +2477,7 @@ class match{
 				setColor("BOLDRED");
 				cout<<"\nNext Work?\n";
 				setColor("RESET");
-				cout<<"1:Try Again\n2: Edit Game Input Settings\n3: Go to Number of Goals Session\n";
+				cout<<"1: Try Again\n2: Edit Game Input Settings\n3: Go to Number of Goals Session\n";
 				cout<<"4: Go to Line Up Session\n";
 				cout<<"\nEnter Your Choice: ";
 				choice =inputChoice(1,4);
@@ -2586,12 +2492,13 @@ class match{
 				}
 				else if(choice==4){
 					setColor("BOLDRED");
-					cout<<"Works:\n";
+					cout<<"\nWorks:\n";
 					setColor("RESET");
 					cout<<"1: Enter Complete Teams Line Ups\n";
 					cout<<"2: Enter "<<tm1.getName()<<" Line Up\n";
 					cout<<"3: Enter "<<tm2.getName()<<" Line Up\n";
 					cout<<"4: Cancel And Try Again to Entering Goal\n";
+					cout<<"\nEnter Your Choice: ";
 					choice=inputChoice(1,4);
 					if(choice==1){
 						setFirstLineup(tm1);
@@ -2801,6 +2708,15 @@ class match{
 		else if (strcasecmp(index,"t2_right")==0) return t2_right;
 		else throw -1;
 	}
+	
+	double doubleDynamicGet(const char *index){
+		if(strcasecmp(index,"t1_flstrength")==0) return getTeamFirstStrength(1);
+		else if(strcasecmp(index,"t2_flstrength")==0) return getTeamFirstStrength(2);
+		else if(strcasecmp(index,"t1_strength")==0) return getTeamStrength(1);
+		else if(strcasecmp(index,"t2_strength")==0) return getTeamStrength(2);
+		else throw -1;
+	}
+		
 	        
 	void setFirstLineup(team tm){
 		setLineup(tm,true);
@@ -3342,6 +3258,9 @@ class match{
 
 
 
+
+
+//Competition
 class competition{
 	team teamOne;
 	team teamTwo;
@@ -3358,7 +3277,8 @@ class competition{
 		maxStreak=new int[3];    //0:Streak | 1:Start | 2:End
 		for(int i=0; 3>i; i++) maxStreak[i]=0;
 		
-		for(int i=0; games[i].sendexist() && 200>i; i++){
+		int i;
+		for(i=0; games[i].sendexist() && 200>i; i++){
 			if(streak==0) start=i;
 			if(games[i].getResult()==tm.sendid() || (state==1 && games[i].getResult()==3)) streak++;
 			else{
@@ -3369,6 +3289,12 @@ class competition{
 				}
 				streak=0;
 			}
+		}
+		
+		if(streak>maxStreak[0]){
+			maxStreak[0]=streak;
+			maxStreak[1]=start;
+			maxStreak[2]=i-1;
 		}
 		
 		return maxStreak;
@@ -3433,7 +3359,7 @@ class competition{
         stringstream temp5;
         stringstream temp6;
                 
-		int numGames[13];
+		int numGames[15];
 		char winName[40];
 		char looseName[40];
 		strcpy(winName,"Winner");
@@ -3441,7 +3367,7 @@ class competition{
 		teamGameStat win(winName,0);
 		teamGameStat loose(looseName,0);
 		
-		for(int i=0; 13>i; i++) numGames[i]=0;
+		for(int i=0; 15>i; i++) numGames[i]=0;
 		//0: Goals
 		//1: Possess
 		//2: Shots
@@ -3537,6 +3463,22 @@ class competition{
 					loose.nSub+=games[i].t2_tt;
 					numGames[12]++;
 				}
+				
+				double tWFirstStrength=games[i].getTeamFirstStrength(1);
+				double tLFirstStrength=games[i].getTeamFirstStrength(2);
+				if(tWFirstStrength>=0 && tLFirstStrength>=0){
+					win.sFOverall+=tWFirstStrength;
+					loose.sFOverall+=tLFirstStrength;
+					numGames[13]++;
+				}
+				
+				double tWStrength=games[i].getTeamStrength(1);
+				double tLStrength=games[i].getTeamStrength(2);
+				if(tWStrength>=0 && tLStrength>=0){
+					win.sOverall+=tWStrength;
+					loose.sOverall+=tLStrength;
+					numGames[14]++;
+				}
 			}
 			
 			if(games[i].res==2){
@@ -3617,6 +3559,22 @@ class competition{
 					loose.nSub+=games[i].t1_tt;
 					numGames[12]++;
 				}
+				
+				double tWFirstStrength=games[i].getTeamFirstStrength(2);
+				double tLFirstStrength=games[i].getTeamFirstStrength(1);
+				if(tWFirstStrength>=0 && tLFirstStrength>=0){
+					win.sFOverall+=tWFirstStrength;
+					loose.sFOverall+=tLFirstStrength;
+					numGames[13]++;
+				}
+				
+				double tWStrength=games[i].getTeamStrength(2);
+				double tLStrength=games[i].getTeamStrength(1);
+				if(tWStrength>=0 && tLStrength>=0){
+					win.sOverall+=tWStrength;
+					loose.sOverall+=tLStrength;
+					numGames[14]++;
+				}
 			}
 		}
 		
@@ -3628,32 +3586,95 @@ class competition{
 		win.convertToPerGame(numGames);
 		loose.convertToPerGame(numGames);
 		//cout<<endl<<"WinnerGoals: "<<win.nGoals<<" | LooserGoals: "<<loose.nGoals<<endl;
-		showWALTable(win,loose,true,true);
+		showWALTable(win,loose,true,true,true);
 	}
 	
-	bool existKnownData(const char * factor){
-		for(int i=0; games[i].sendexist(); i++){
-			if(games[i].dynamicGet(factor)!=-2) return true;
+	bool existKnownData(const char * factor, bool isDouble=false){
+		if(!isDouble){
+			for(int i=0; games[i].sendexist(); i++){
+				if(games[i].dynamicGet(factor)>=0) return true;
+			}
+		}
+		
+		else{
+			for(int i=0; games[i].sendexist(); i++){
+				if(games[i].doubleDynamicGet(factor)>=0) return true;
+			}
 		}
 		return false;
 	}
 	
-	int getMaxMatchIndex(const char * factor){
-		int max,index;
-		max=games[0].dynamicGet(factor);
+	int getMaxMatchIndex(const char * factor,bool isDouble=false){
+		int index;
+		double max;
 		index=0;
-		for(int i=1; 200>i && games[i].sendexist(); i++){
-			if(games[i].dynamicGet(factor)>max){
-				max=games[i].dynamicGet(factor);
-				index=i;
+		max=-1000;
+		
+		if(!isDouble){
+			int localMax=games[0].dynamicGet(factor);
+			for(int i=1; 200>i && games[i].sendexist(); i++){
+				if(games[i].dynamicGet(factor)>localMax){
+					localMax=games[i].dynamicGet(factor);
+					index=i;
+				}
+				
+				else if((strcasecmp(factor,"t1DifGoals")==0 || strcasecmp(factor,"t2DifGoals")==0) &&
+				games[i].dynamicGet(factor)==localMax && games[i].dynamicGet("tg")>games[index].dynamicGet("tg")){
+					index=i;
+				}
 			}
-			else if((strcasecmp(factor,"t1DifGoals")==0 || strcasecmp(factor,"t2DifGoals")==0) &&
-			games[i].dynamicGet(factor)==max && games[i].dynamicGet("tg")>games[index].dynamicGet("tg")){
-				index=i;
-			}
+			if(localMax==-2) return -1;
 		}
-		if(max==-2) return -1;
+		
+		else{
+			max=games[0].doubleDynamicGet(factor);
+			for(int i=1; 200>i && games[i].sendexist(); i++){
+				if(games[i].doubleDynamicGet(factor)>max){
+					max=games[i].doubleDynamicGet(factor);
+					index=i;
+				}
+			}
+			if(max==-2) return -1;
+		}
+		
 		return index;
+	}
+	
+	int getMinMatchIndex(const char * factor,bool isDouble=false){
+		int index;
+		index=0;
+		
+		if(!isDouble){
+			int localMin=INT_MAX;
+			for(int i=0; 200>i && games[i].sendexist(); i++){
+				int value=games[i].dynamicGet(factor);
+				
+				if(value<localMin && value>=0){
+					localMin=games[i].dynamicGet(factor);
+					index=i;
+				}
+				
+				else if((strcasecmp(factor,"t1DifGoals")==0 || strcasecmp(factor,"t2DifGoals")==0) &&
+				value==localMin && games[i].dynamicGet("tg")>games[index].dynamicGet("tg")){
+					index=i;
+				}
+			}
+			if(localMin==INT_MAX) return -1;
+			return index;
+		}
+		
+		else{
+			double min=INT_MAX;
+			for(int i=0; 200>i && games[i].sendexist(); i++){
+				double value=games[i].doubleDynamicGet(factor);
+				if(value<min && value>=0){
+					min=value;
+					index=i;
+				}
+			}
+			if(min==INT_MAX) return -1;
+			return index;
+		}
 	}
 	
 	int** getFastestAndLatestGoal(){
@@ -3971,23 +3992,300 @@ class competition{
 				
 				cout<<endl;
 			}
+			
+			if(existKnownData("t1_flstrength",true) || existKnownData("t2_flstrength",true)){
+				cout<<endl; setColor("BOLDBLUE"); cout<<"Max First Line Up Strength:"; setColor("RESET");
+				
+				if(existKnownData("t1_flstrength",true)){
+					cout<<endl; setColor("BOLDMAGENTA"); cout<<teamOne.getName()<<": ";
+					index=getMaxMatchIndex("t1_flstrength",true);
+					cout<<setprecision(3)<<games[index].doubleDynamicGet("t1_flstrength")<<" | Game "<<index+1; setColor("RESET");
+				}
+				
+				if(existKnownData("t2_flstrength",true)){
+					cout<<endl; setColor("BOLDCYAN"); cout<<teamTwo.getName()<<": ";
+					index=getMaxMatchIndex("t2_flstrength",true);
+					cout<<setprecision(3)<<games[index].doubleDynamicGet("t2_flstrength")<<" | Game "<<index+1; setColor("RESET");
+				}
+				
+				cout<<endl;
+			}
+			
+			if(existKnownData("t1_strength",true) || existKnownData("t2_strength",true)){
+				cout<<endl; setColor("BOLDBLUE"); cout<<"Max Overall Line Up Strength:"; setColor("RESET");
+				
+				if(existKnownData("t1_strength",true)){
+					cout<<endl; setColor("BOLDMAGENTA"); cout<<teamOne.getName()<<": ";
+					index=getMaxMatchIndex("t1_strength",true);
+					cout<<setprecision(3)<<games[index].doubleDynamicGet("t1_strength")<<" | Game "<<index+1; setColor("RESET");
+				}
+				
+				if(existKnownData("t2_strength",true)){
+					cout<<endl; setColor("BOLDCYAN"); cout<<teamTwo.getName()<<": ";
+					index=getMaxMatchIndex("t2_strength",true);
+					cout<<setprecision(3)<<games[index].doubleDynamicGet("t2_strength")<<" | Game "<<index+1; setColor("RESET");
+				}
+				
+				cout<<endl;
+			}
 		}
 	}
 	
-	int getNumAbsValues(const char * factor){
+	void printMins(){
+		if(!games[0].sendexist()) cout<<endl<<"Mosabeghe ei sabt nashode ast!"<<endl;
+		else if(teamOne.sendid()==2 && teamTwo.sendid()==1) cout<<endl<<"Error in Teams Order"<<endl;
+		else{
+			int index;
+			cout<<endl; setColor("BOLDRED"); cout<<"Minimum Stats: "; setColor("RESET"); cout<<endl;
+			
+			if(existKnownData("t1_shotsOne") || existKnownData("t2_shotsOne")){
+				cout<<endl; setColor("BOLDBLUE"); cout<<"Minimum Shots:"; setColor("RESET");
+				
+				if(existKnownData("t1_shotsOne")){
+					cout<<endl; setColor("BOLDMAGENTA"); cout<<teamOne.getName()<<": ";
+					index=getMinMatchIndex("t1_shotsOne");
+					cout<<games[index].dynamicGet("t1_shotsOne")<<" Shots | Game "<<index+1; setColor("RESET");
+				}
+				
+				if(existKnownData("t2_shotsOne")){
+					cout<<endl; setColor("BOLDCYAN"); cout<<teamTwo.getName()<<": ";
+					index=getMinMatchIndex("t2_shotsOne");
+					cout<<games[index].dynamicGet("t2_shotsOne")<<" Shots | Game "<<index+1; setColor("RESET");
+				}
+				
+				cout<<endl;
+			}
+			
+			if(existKnownData("t1_shotsTwo") || existKnownData("t2_shotsTwo")){
+				cout<<endl; setColor("BOLDBLUE"); cout<<"Minimum On Target Shots:"; setColor("RESET");
+				
+				if(existKnownData("t1_shotsTwo")){
+					cout<<endl; setColor("BOLDMAGENTA"); cout<<teamOne.getName()<<": ";
+					index=getMinMatchIndex("t1_shotsTwo");
+					cout<<games[index].dynamicGet("t1_shotsTwo")<<" Shots | Game "<<index+1; setColor("RESET");
+				}
+				
+				if(existKnownData("t2_shotsTwo")){
+					cout<<endl; setColor("BOLDCYAN"); cout<<teamTwo.getName()<<": ";
+					index=getMinMatchIndex("t2_shotsTwo");
+					cout<<games[index].dynamicGet("t2_shotsTwo")<<" Shots | Game "<<index+1; setColor("RESET");
+				}
+				
+				cout<<endl;
+			}
+			
+			if(existKnownData("t1_possess") || existKnownData("t2_possess")){
+				cout<<endl; setColor("BOLDBLUE"); cout<<"Minimum Possession:"; setColor("RESET");
+				
+				if(existKnownData("t1_possess")){
+					cout<<endl; setColor("BOLDMAGENTA"); cout<<teamOne.getName()<<": ";
+					index=getMinMatchIndex("t1_possess");
+					cout<<games[index].dynamicGet("t1_possess")<<" % | Game "<<index+1; setColor("RESET");
+				}
+				
+				if(existKnownData("t2_possess")){
+					cout<<endl; setColor("BOLDCYAN"); cout<<teamTwo.getName()<<": ";
+					index=getMinMatchIndex("t2_possess");
+					cout<<games[index].dynamicGet("t2_possess")<<" % | Game "<<index+1; setColor("RESET");
+				}
+				
+				cout<<endl;
+			}
+			
+			if(existKnownData("t1_pass_c") || existKnownData("t2_pass_c")){
+				cout<<endl; setColor("BOLDBLUE"); cout<<"Minimum Pass Completed:"; setColor("RESET");
+				
+				if(existKnownData("t1_pass_c")){
+					cout<<endl; setColor("BOLDMAGENTA"); cout<<teamOne.getName()<<": ";
+					index=getMinMatchIndex("t1_pass_c");
+					cout<<games[index].dynamicGet("t1_pass_c")<<" % | Game "<<index+1; setColor("RESET");
+				}
+				
+				if(existKnownData("t2_pass_c")){
+					cout<<endl; setColor("BOLDCYAN"); cout<<teamTwo.getName()<<": ";
+					index=getMinMatchIndex("t2_pass_c");
+					cout<<games[index].dynamicGet("t2_pass_c")<<" % | Game "<<index+1; setColor("RESET");
+				}
+				
+				cout<<endl;
+			}
+			
+			if(existKnownData("t1_interc") || existKnownData("t2_interc")){
+				cout<<endl; setColor("BOLDBLUE"); cout<<"Minimum Interception:"; setColor("RESET");
+				
+				if(existKnownData("t1_interc")){
+					cout<<endl; setColor("BOLDMAGENTA"); cout<<teamOne.getName()<<": ";
+					index=getMinMatchIndex("t1_interc");
+					cout<<games[index].dynamicGet("t1_interc")<<" | Game "<<index+1; setColor("RESET");
+				}
+				
+				if(existKnownData("t2_interc")){
+					cout<<endl; setColor("BOLDCYAN"); cout<<teamTwo.getName()<<": ";
+					index=getMinMatchIndex("t2_interc");
+					cout<<games[index].dynamicGet("t2_interc")<<" | Game "<<index+1; setColor("RESET");
+				}
+				
+				cout<<endl;
+			}
+			
+			if(existKnownData("t1_saves") || existKnownData("t2_saves")){
+				cout<<endl; setColor("BOLDBLUE"); cout<<"Minimum Saves:"; setColor("RESET");
+				
+				if(existKnownData("t1_saves")){
+					cout<<endl; setColor("BOLDMAGENTA"); cout<<teamOne.getName()<<": ";
+					index=getMinMatchIndex("t1_saves");
+					cout<<games[index].dynamicGet("t1_saves")<<" | Game "<<index+1; setColor("RESET");
+				}
+				
+				if(existKnownData("t2_saves")){
+					cout<<endl; setColor("BOLDCYAN"); cout<<teamTwo.getName()<<": ";
+					index=getMinMatchIndex("t2_saves");
+					cout<<games[index].dynamicGet("t2_saves")<<" | Game "<<index+1; setColor("RESET");
+				}
+				
+				cout<<endl;
+			}
+			
+			if(existKnownData("t1_cross") || existKnownData("t2_cross")){
+				cout<<endl; setColor("BOLDBLUE"); cout<<"Minimum Crosses:"; setColor("RESET");
+				
+				if(existKnownData("t1_cross")){
+					cout<<endl; setColor("BOLDMAGENTA"); cout<<teamOne.getName()<<": ";
+					index=getMinMatchIndex("t1_cross");
+					cout<<games[index].dynamicGet("t1_cross")<<" | Game "<<index+1; setColor("RESET");
+				}
+				
+				if(existKnownData("t2_cross")){
+					cout<<endl; setColor("BOLDCYAN"); cout<<teamTwo.getName()<<": ";
+					index=getMinMatchIndex("t2_cross");
+					cout<<games[index].dynamicGet("t2_cross")<<" | Game "<<index+1; setColor("RESET");
+				}
+				
+				cout<<endl;
+			}
+			
+			if(existKnownData("t1_corners") || existKnownData("t2_corners")){
+				cout<<endl; setColor("BOLDBLUE"); cout<<"Minimum Corners:"; setColor("RESET");
+				
+				if(existKnownData("t1_corners")){
+					cout<<endl; setColor("BOLDMAGENTA"); cout<<teamOne.getName()<<": ";
+					index=getMinMatchIndex("t1_corners");
+					cout<<games[index].dynamicGet("t1_corners")<<" | Game "<<index+1; setColor("RESET");
+				}
+				
+				if(existKnownData("t2_corners")){
+					cout<<endl; setColor("BOLDCYAN"); cout<<teamTwo.getName()<<": ";
+					index=getMinMatchIndex("t2_corners");
+					cout<<games[index].dynamicGet("t2_corners")<<" | Game "<<index+1; setColor("RESET");
+				}
+				
+				cout<<endl;
+			}
+			
+			if(existKnownData("t1_fk") || existKnownData("t2_fk")){
+				cout<<endl; setColor("BOLDBLUE"); cout<<"Minimum Free Kick:"; setColor("RESET");
+				
+				if(existKnownData("t1_fk")){
+					cout<<endl; setColor("BOLDMAGENTA"); cout<<teamOne.getName()<<": ";
+					index=getMinMatchIndex("t1_fk");
+					cout<<games[index].dynamicGet("t1_fk")<<" | Game "<<index+1; setColor("RESET");
+				}
+				
+				if(existKnownData("t2_fk")){
+					cout<<endl; setColor("BOLDCYAN"); cout<<teamTwo.getName()<<": ";
+					index=getMinMatchIndex("t2_fk");
+					cout<<games[index].dynamicGet("t2_fk")<<" | Game "<<index+1; setColor("RESET");
+				}
+				
+				cout<<endl;
+			}
+			
+			if(existKnownData("t1_foulsOne") || existKnownData("t2_foulsOne")){
+				cout<<endl; setColor("BOLDBLUE"); cout<<"Minimum Fouls:"; setColor("RESET");
+				
+				if(existKnownData("t1_foulsOne")){
+					cout<<endl; setColor("BOLDMAGENTA"); cout<<teamOne.getName()<<": ";
+					index=getMinMatchIndex("t1_foulsOne");
+					cout<<games[index].dynamicGet("t1_foulsOne")<<" | Game "<<index+1; setColor("RESET");
+				}
+				
+				if(existKnownData("t2_foulsOne")){
+					cout<<endl; setColor("BOLDCYAN"); cout<<teamTwo.getName()<<": ";
+					index=getMinMatchIndex("t2_foulsOne");
+					cout<<games[index].dynamicGet("t2_foulsOne")<<" | Game "<<index+1; setColor("RESET");
+				}
+				
+				cout<<endl;
+			}
+			
+			if(existKnownData("t1_flstrength",true) || existKnownData("t2_flstrength",true)){
+				cout<<endl; setColor("BOLDBLUE"); cout<<"Minimum First Line Up Strength:"; setColor("RESET");
+				
+				if(existKnownData("t1_flstrength",true)){
+					cout<<endl; setColor("BOLDMAGENTA"); cout<<teamOne.getName()<<": ";
+					index=getMinMatchIndex("t1_flstrength",true);
+					cout<<setprecision(3)<<games[index].doubleDynamicGet("t1_flstrength")<<" | Game "<<index+1; setColor("RESET");
+				}
+				
+				if(existKnownData("t2_flstrength",true)){
+					cout<<endl; setColor("BOLDCYAN"); cout<<teamTwo.getName()<<": ";
+					index=getMinMatchIndex("t2_flstrength",true);
+					cout<<setprecision(3)<<games[index].doubleDynamicGet("t2_flstrength")<<" | Game "<<index+1; setColor("RESET");
+				}
+				
+				cout<<endl;
+			}
+			
+			if(existKnownData("t1_strength",true) || existKnownData("t2_strength",true)){
+				cout<<endl; setColor("BOLDBLUE"); cout<<"Minimum Overall Line Up Strength:"; setColor("RESET");
+				
+				if(existKnownData("t1_strength",true)){
+					cout<<endl; setColor("BOLDMAGENTA"); cout<<teamOne.getName()<<": ";
+					index=getMinMatchIndex("t1_strength",true);
+					cout<<setprecision(3)<<games[index].doubleDynamicGet("t1_strength")<<" | Game "<<index+1; setColor("RESET");
+				}
+				
+				if(existKnownData("t2_strength",true)){
+					cout<<endl; setColor("BOLDCYAN"); cout<<teamTwo.getName()<<": ";
+					index=getMinMatchIndex("t2_strength",true);
+					cout<<setprecision(3)<<games[index].doubleDynamicGet("t2_strength")<<" | Game "<<index+1; setColor("RESET");
+				}
+				
+				cout<<endl;
+			}
+		}
+	}
+	
+	int getNumAbsValues(const char * factor,bool isDouble=false){
 		int num=0;
-		for (int i=0; games[i].sendexist(); i++){
-			if(games[i].dynamicGet(factor)!=-2) num++;
+		if(!isDouble){
+			for (int i=0; games[i].sendexist(); i++){
+				if(games[i].dynamicGet(factor)>=0) num++;
+			}
+		}
+		else {
+			for (int i=0; games[i].sendexist(); i++){
+				if(games[i].doubleDynamicGet(factor)>=0) num++;
+			}
 		}
 		return num;
 	}
 	
-	int getSumValues(const char * factor){
-		int sum=0;
-		for (int i=0; games[i].sendexist(); i++){
-			if(games[i].dynamicGet(factor)!=-2) sum+=games[i].dynamicGet(factor);
+	int getSumValues(const char * factor,bool isDouble=false){
+		if(!isDouble){
+			int sum=0;
+			for (int i=0; games[i].sendexist(); i++){
+				if(games[i].dynamicGet(factor)>=0) sum+=games[i].dynamicGet(factor);
+			}
+			return sum;
 		}
-		return sum;
+		else{
+			double sum=0;
+			for (int i=0; games[i].sendexist(); i++){
+				if(games[i].doubleDynamicGet(factor)>=0) sum+=games[i].doubleDynamicGet(factor);
+			}
+			return sum;
+		}
 	}
 	
 	void compare(double m1,double m2,int s,int h=0){
@@ -4062,16 +4360,23 @@ class competition{
 			return;
 		}
 		
+		bool whiteStar=false;
+		
 		double unit=(t1val+t2val)/nStar;
-		int t1Star=t1val/unit;
-		int t2Star=t2val/unit;
-		double t1Ashar=(t1val/unit)-t1Star;
-		double t2Ashar=(t2val/unit)-t2Star;
-		bool whiteStar=(t1Ashar==t2Ashar && t1Ashar!=0);
-		if(!whiteStar){
-			if(t1Ashar>t2Ashar) t1Star++;
-			else if(t2Ashar>t1Ashar) t2Star++;
+		double val1=t1val/unit;
+		double val2=t2val/unit;
+		
+		int t1Star=doubleToInt(val1);
+		int t2Star=doubleToInt(val2);
+		
+		if((t1Star+t2Star)!=30){
+			whiteStar=(compareDoubleDecimals(val1,val2)==0 && !isInt(val1));
+			if(!whiteStar){
+				if(compareDoubleDecimals(val1,val2)==1) t1Star++;
+				else if(compareDoubleDecimals(val1,val2)==2) t2Star++;
+			}
 		}
+		
 		setColor("BOLDMAGENTA");
 		for(int i=0; t1Star>i; i++) cout<<"*";
 		if(whiteStar){
@@ -4082,7 +4387,7 @@ class competition{
 		for(int i=0; t2Star>i; i++) cout<<"*";
 	}
 	
-	void printCompareFromFactors(const char*title,const char *t1_factor, const char *t2_factor,int s, int nStar,int valueLen,stringstream &cadr,bool printPH=false, bool fewBetter=false){
+	void printCompareFromFactors(const char*title,const char *t1_factor, const char *t2_factor,int s, int nStar,int valueLen,stringstream &cadr,int prec=2,bool printPH=false, bool fewBetter=false,bool isDouble=false){
 		stringstream t1SS,t2SS;
 		int t1Sum,t2Sum;
 		double t1Avg,t2Avg;
@@ -4090,7 +4395,23 @@ class competition{
 		if(strcmp(title,"Wins")==0){
 			t1Avg=teamOne.getWins();
 			t2Avg=teamTwo.getWins();
-		}		
+		}
+		
+		else if(isDouble){
+			double sum1,sum2;
+			if(existKnownData(t1_factor,true)){
+				sum1=getSumValues(t1_factor,true);
+				t1Avg=(double)sum1/getNumAbsValues(t1_factor,true);
+			}
+			else t1Avg=-2;
+			
+			if(existKnownData(t2_factor,true)){
+				sum2=getSumValues(t2_factor,true);
+				t2Avg=(double)sum2/getNumAbsValues(t2_factor,true);
+			}
+			else t2Avg=-2;
+		}
+		
 		else{
 			if(existKnownData(t1_factor)){
 				t1Sum=getSumValues(t1_factor);
@@ -4114,20 +4435,20 @@ class competition{
 		if(!UKOne && !UKTwo){
 			if((!fewBetter && t1Avg>t2Avg) || (fewBetter && t1Avg<t2Avg)) t1SS<<"$$GRN";
 			else if((!fewBetter && t2Avg>t1Avg) || (fewBetter && t2Avg<t1Avg)) t2SS<<"$$GRN";
-			t1SS<<setprecision(2)<<t1Avg;
-			t2SS<<setprecision(2)<<t2Avg;
+			t1SS<<setprecision(prec)<<t1Avg;
+			t2SS<<setprecision(prec)<<t2Avg;
 			if(printPH){
 				t1SS<<"%";
 				t2SS<<"%";
 			}
 		}
 		else if(!UKOne){
-			t1SS<<setprecision(2)<<t1Avg;
+			t1SS<<setprecision(prec)<<t1Avg;
 			if(printPH) t1SS<<"%";
 		}
 		
 		else if(!UKTwo){
-			t2SS<<setprecision(2)<<t1Avg;
+			t2SS<<setprecision(prec)<<t1Avg;
 			if(printPH) t2SS<<"%";
 		}
 		
@@ -4155,6 +4476,9 @@ class competition{
 		bool exLeft=(existKnownData("t1_left") || existKnownData("t2_left"));
 		bool exCenter=(existKnownData("t1_center") || existKnownData("t2_right"));
 		bool exRight=(existKnownData("t1_center") || existKnownData("t2_right"));
+		
+		bool exFLStrength=(existKnownData("t1_flstrength",true) || existKnownData("t2_flstrength",true));
+		bool exStrength=(existKnownData("t1_strength",true) || existKnownData("t2_strength",true));
 		
 		cout<<endl;
 		int s=10;
@@ -4189,16 +4513,16 @@ class competition{
 		space(s); ccsPrint(cadr); cadr_dash(maxLength); setColor("RESET");
 		
 		printCompareFromFactors("Goals","t1_goals","t2_goals",s,nStar,valueLen,cadr); cout<<endl;
-		if(exYTCards){ printCompareFromFactors("Yellow Cards","t1YC","t2YC",s,nStar,valueLen,cadr,false,true); cout<<endl;}
-		if(exRTCards){ printCompareFromFactors("Red Cards","t1RC","t2RC",s,nStar,valueLen,cadr,false,true); cout<<endl;}
-		if(exPossess){ printCompareFromFactors("Possession","t1_possess","t2_possess",s,nStar,valueLen,cadr,true); cout<<endl;}
+		if(exYTCards){ printCompareFromFactors("Yellow Cards","t1YC","t2YC",s,nStar,valueLen,cadr,2,false,true); cout<<endl;}
+		if(exRTCards){ printCompareFromFactors("Red Cards","t1RC","t2RC",s,nStar,valueLen,cadr,2,false,true); cout<<endl;}
+		if(exPossess){ printCompareFromFactors("Possession","t1_possess","t2_possess",s,nStar,valueLen,cadr,2,true); cout<<endl;}
 		if(exShotsOne){ printCompareFromFactors("Shots","t1_shotsOne","t2_shotsOne",s,nStar,valueLen,cadr); cout<<endl;}
 		if(exShotsTwo){ printCompareFromFactors("Shots (On Target)","t1_shotsTwo","t2_shotsTwo",s,nStar,valueLen,cadr); cout<<endl;}
-		if(exFoulsOne){ printCompareFromFactors("Fouls","t1_foulsOne","t2_foulsOne",s,nStar,valueLen,cadr,false,true); cout<<endl;}
-		if(exFoulsTwo){ printCompareFromFactors("Offside","t1_foulsTwo","t2_foulsTwo",s,nStar,valueLen,cadr,false,true); cout<<endl;}
+		if(exFoulsOne){ printCompareFromFactors("Fouls","t1_foulsOne","t2_foulsOne",s,nStar,valueLen,cadr,2,false,true); cout<<endl;}
+		if(exFoulsTwo){ printCompareFromFactors("Offside","t1_foulsTwo","t2_foulsTwo",s,nStar,valueLen,cadr,2,false,true); cout<<endl;}
 		if(exCorners){ printCompareFromFactors("Corners","t1_corners","t2_corners",s,nStar,valueLen,cadr); cout<<endl;}
 		if(exFk){ printCompareFromFactors("Free Kick","t1_fk","t2_fk",s,nStar,valueLen,cadr); cout<<endl;}
-		if(exPassC){ printCompareFromFactors("Pass Completed","t1_pass_c","t2_pass_c",s,nStar,valueLen,cadr,true); cout<<endl;}
+		if(exPassC){ printCompareFromFactors("Pass Completed","t1_pass_c","t2_pass_c",s,nStar,valueLen,cadr,2,true); cout<<endl;}
 		if(exCross){ printCompareFromFactors("Crosses","t1_cross","t2_cross",s,nStar,valueLen,cadr); cout<<endl;}
 		if(exInterc){ printCompareFromFactors("Interception","t1_interc","t2_interc",s,nStar,valueLen,cadr); cout<<endl;}
 		if(exTackles){ printCompareFromFactors("Tackles","t1_tackles","t2_tackles",s,nStar,valueLen,cadr); cout<<endl;}
@@ -4212,9 +4536,21 @@ class competition{
 			temp<<"$$RED"<<"Attacink Areas (Per Game)"<<"$0RST";
 			space(s); strwhere(temp,maxLength); cout<<endl;
 			space(s); ccsPrint(cadr); cadr_dash(maxLength); setColor("RESET");
-			if(exLeft){ printCompareFromFactors("Left","t1_left","t2_left",s,nStar,valueLen,cadr,true); cout<<endl;}
-			if(exCenter){ printCompareFromFactors("Center","t1_center","t2_center",s,nStar,valueLen,cadr,true); cout<<endl;}
-			if(exRight){ printCompareFromFactors("Right","t1_right","t2_right",s,nStar,valueLen,cadr,true); cout<<endl;}
+			if(exLeft){ printCompareFromFactors("Left","t1_left","t2_left",s,nStar,valueLen,cadr,2,true); cout<<endl;}
+			if(exCenter){ printCompareFromFactors("Center","t1_center","t2_center",s,nStar,valueLen,cadr,2,true); cout<<endl;}
+			if(exRight){ printCompareFromFactors("Right","t1_right","t2_right",s,nStar,valueLen,cadr,2,true); cout<<endl;}
+			
+			space(s); setColor("BOLDBLUE"); cadr_dash(maxLength); setColor("RESET");
+		}
+		
+		if(exFLStrength || exStrength){
+			cout<<endl;
+			temp.str("");
+			temp<<"$$RED"<<"Team Strength (Per Game)"<<"$0RST";
+			space(s); strwhere(temp,maxLength); cout<<endl;
+			space(s); ccsPrint(cadr); cadr_dash(maxLength); setColor("RESET");
+			if(exFLStrength){ printCompareFromFactors("FL Strength","t1_flstrength","t2_flstrength",s,nStar,valueLen,cadr,3,false,false,true); cout<<endl;}
+			if(exStrength){ printCompareFromFactors("Overall Strength","t1_strength","t2_strength",s,nStar,valueLen,cadr,3,false,false,true); cout<<endl;}
 			
 			space(s); setColor("BOLDBLUE"); cadr_dash(maxLength); setColor("RESET");
 		}
@@ -4312,19 +4648,19 @@ class competition{
 				case 3: setColor("BOLDWHITE"); break;
 			}
 			if(i<9) cout<<"0";
-			cout<<i+1; setColor("BOLDBLACK"); cout<<" | ";
+			cout<<i+1; setColor("BOLDBLACK"); cout<<" | "; setColor("RESET");
 		}
 		cout<<endl<<endl;
 		
 		for(int i=0; games[i].sendexist() && 200>i; i++){
-			if(i/10*10==i){ cout<<endl<<"| "; setColor("RESET");}
+			if(i/10*10==i){ setColor("BOLDBLACK"); cout<<endl<<"| "; setColor("RESET");}
 			switch(games[i].dynamicGet("res")){
 				case 1: setColor("BOLDMAGENTA"); break;
 				case 2: setColor("BOLDCYAN"); break;
 				case 3: setColor("BOLDWHITE"); break;
 			}
 			cout<<games[i].dynamicGet("t1_goals")<<"-"<<games[i].dynamicGet("t2_goals");
-			cout<<" | ";
+			setColor("BOLDBLACK"); cout<<" | "; setColor("RESET");
 		}
 		cout<<endl;
 	}
@@ -4529,16 +4865,162 @@ class competition{
 
 
 
-//Main Function
+//FileNames
+class FileNames{
+    int length;
+    string fn[300];
+    
+	public:
+    
+    FileNames(){
+        length=0;
+    }
+    
+    void delOlds(){
+        if(length<=200) return;
+        int step=length-200;
+        for(int i=0; 200>i; i++){
+            fn[i]=fn[i+step];
+        }
+        length=200;
+    }
+    
+    bool choiceMenu(char* inputFN){
+        int printIndex=0;
+        int choice;
+        string isfd[300];
+        
+        start:
+        cout<<endl;
+        setColor("BOLDBLUE");
+        cout<<"Load:\n";
+        setColor("RESET");
+		
+        for(int i=0; length>i; i++){
+            char tempFN[256];
+            strcpy(tempFN,fn[i].c_str());
+            if(isDataFile(tempFN)){
+                isfd[printIndex]=fn[i];
+                setColor("BOLDBLUE");
+                cout<<++printIndex<<": ";
+                setColor("RESET");
+                cout<<fn[i]<<endl;
+            }
+        }
+        
+        setColor("BOLDBLUE");
+        cout<<printIndex+1<<": ";
+        setColor("RESET");
+        cout<<"Enter Another File Name\n";
+        setColor("BOLDBLUE");
+        cout<<printIndex+2<<": ";
+        setColor("RESET");
+        cout<<"Cancel\n";
+        cout<<endl<<"Enter Your Choice: ";
+        choice=inputChoice(1,printIndex+2);
+		
+        if(choice<=printIndex){
+            strncpy(inputFN,isfd[choice-1].c_str(),256);
+            append(inputFN);
+            return true;
+        }
+        
+        else if(choice==printIndex+1){
+            userinput:
+            char userFN[256];
+            cout<<endl<<"Enter File Name: ";
+            cin.getline(userFN,256);
+            if(isDataFile(userFN)){
+                string str(userFN);
+                append(str);
+                strncpy(inputFN,userFN,256);
+                return true;
+            }
+            
+            else{
+                cout<<endl;
+                if(existFile(userFN)) printError("Invalid File!\n");
+                else printError("File Not Found!\n");
+                cout<<endl;
+                setColor("BOLDRED");
+                cout<<"Next Work?\n";
+                setColor("RESET");
+                cout<<"1: Try Again\n";
+                cout<<"2: Go to File Names Menu\n";
+                cout<<"3: Cancel\n";
+                cout<<endl;
+                cout<<"Enter Your Choice: ";
+                int choice=inputChoice(1,3);
+                if(choice==1) goto userinput;
+                else if(choice==2) goto start;
+                else return false;
+            }
+        }
+        
+        else if(choice==printIndex+2) return false;
+		
+		throw -1;
+    }
+    
+    void append(string str){
+        if(length==299) delOlds();
+        int index;
+        for(index=0; length>index && fn[index].compare(str)!=0; index++);
+        if(index<length){
+            for(int i=index; i>0; i--){
+                fn[i]=fn[i-1];
+            }
+            fn[0]=str;
+        }
+        else{
+            fn[index]=str;
+            length++;
+        }
+        save();
+    }
+    
+    void save(){
+        fstream f1("configs.bin" , ios::out | ios::binary);
+        f1.write(reinterpret_cast<char *>(&length), sizeof(length));
+        for(int i=0; length>i; i++){
+            int size = (fn[i].size());
+            f1.write(reinterpret_cast<char *>(&size), sizeof(int));
+            f1.write(fn[i].c_str(), size);
+	}
+        f1.close();
+    }
+    
+    void load(){
+        fstream f1("configs.bin" , ios::in | ios::binary);
+        if(f1){
+            f1.read(reinterpret_cast<char *>(&length), sizeof(length));
+            for(int i=0; length>i; i++){
+                int size;
+                char *buf;
+                f1.read(reinterpret_cast<char *>(&size), sizeof(int));
+                buf = new char[size];
+                f1.read(buf, size);
+                fn[i] = "";
+                fn[i].append(buf, size);
+            }
+            f1.close();
+        }
+    }
+};
 
+
+
+
+//Main.cpp
+char* DATA_FILE_NAME;
+char* NULL_PATH_STRING;
+bool IS_SAVED;
 
 int main(int argc, char** argv) {
     DATA_FILE_NAME=new char[256];
     NULL_PATH_STRING=new char[100];
-	EXE_APP_NAME=new char[150];
-    strcpy(NULL_PATH_STRING,"###NULLPATH###");
+	strcpy(NULL_PATH_STRING,"###NULLPATH###");
     strcpy(DATA_FILE_NAME,NULL_PATH_STRING);
-	strcpy(EXE_APP_NAME,"arenacpp");
     IS_SAVED=true;
     srand(time(NULL));
     int choice;
@@ -4563,7 +5045,6 @@ int main(int argc, char** argv) {
 			cin.getline(temp,20);
 			if(strcmp(temp,"q")==0 || strcmp(temp,"Q")==0) break;
 			else if(strcmp(temp,"R")==0 || strcmp(temp,"r")==0){
-				system("cls");
 				goto start_squads;
 			}
 		}
@@ -4598,14 +5079,64 @@ int main(int argc, char** argv) {
     
     //correctData(t1,t2,games,inpSettings);
     
-    if(!mainMenu(t1,t2,games,inpSettings,argv[0])) goto newtour;
+    if(!mainMenu(t1,t2,games,inpSettings,argv[0])){
+		strcpy(DATA_FILE_NAME,NULL_PATH_STRING);
+		goto newtour;
+	}
     return 0;
 }
 
 
-//End Main Function
 
 
+
+//Generals.cpp
+int doubleToInt(double d){
+	int sum=0;
+	char temp[30];
+	sprintf(temp,"%f",d);
+	for(int i=0; temp[i]!=0 && temp[i]!='.'; i++){
+		sum=(sum*10)+(temp[i]-48);
+	}
+	return sum;
+}
+
+int compareDoubleDecimals(double d1,double d2){
+	char temp1[30];
+	char temp2[30];
+	sprintf(temp1,"%f",d1);
+	sprintf(temp2,"%f",d2);
+	
+	int ind1,ind2;
+	for(ind1=0; temp1[ind1]!='.'; ind1++);
+	for(ind2=0; temp2[ind2]!='.'; ind2++);
+	ind1++;
+	ind2++;
+	
+	for(int i=0; 6>i; i++,ind1++,ind2++){
+		if(temp1[ind1]==0 && temp2[ind2]==0) return 0;
+		else if(temp1[ind1]==0) return 2;
+		else if(temp2[ind2]==0) return 1;
+		else{
+			if(temp1[ind1]>temp2[ind2]) return 1;
+			else if(temp1[ind1]<temp2[ind2]) return 2;
+		}
+	}
+	
+	return 0;
+}
+
+bool isInt(double d1){
+	char temp1[30];
+	sprintf(temp1,"%f",d1);
+	int ind1;
+	for(ind1=0; temp1[ind1]!='.'; ind1++);
+	ind1++;
+	for(int i=0; 6>i; i++,ind1++){
+		if(temp1[ind1]!=48) return false;
+	}
+	return true;
+}
 
 void swap(int &a,int &b){
 	int temp=a;
@@ -4850,6 +5381,13 @@ void strwhere(const char *a,int zarf){
     strwhere(a,zarf,0);
 }
 
+int findIndexInIntArray(int value,int *array,int length){
+	for(int i=0; length>i; i++){
+		if(value==array[i]) return i;
+	}
+	return -1;
+}
+
 int generateNewPrId(team tm1,team tm2){
     bool correct;
     int min=1000;
@@ -5043,6 +5581,7 @@ bool load(team &tm1, team &tm2, match *m,inputProfile& inpSettings){
     cout<<fileName<<" Loaded Successfully.\n";
     setColor("RESET");
     strcpy(DATA_FILE_NAME,fileName);
+	IS_SAVED=true;
     return true;
 }
 
@@ -5110,7 +5649,7 @@ bool enterTeams(team& tm1,team& tm2){
     return true;
 }
 
-bool mainMenu(team& t1,team& t2,match *games,inputProfile& inpSettings, const char* arg){
+bool mainMenu(team& t1,team& t2,match *games,inputProfile& inpSettings,const char* arg){
     while(true){
         int num=0;
         bool canSave=strcmp(DATA_FILE_NAME,NULL_PATH_STRING)!=0;
@@ -5136,8 +5675,8 @@ bool mainMenu(team& t1,team& t2,match *games,inputProfile& inpSettings, const ch
         
         cout<<"\nEnter your choice: ";
         int choice = inputChoice(1,num+2+canSave);
-        if(choice==1) t1.teamManage(t2);
-        else if(choice==2) t2.teamManage(t1);
+        if(choice==1) t1.teamManage(t2,games);
+        else if(choice==2) t2.teamManage(t1,games);
 		else if(choice==3 && lostDataWarning(t1,t2,games,inpSettings,true)) externalShowAllPrs(arg);
         else if(choice==4) add_game(games,t1,t2,inpSettings);
         else if(choice==5) editGame(games,t1,t2);
@@ -5171,20 +5710,22 @@ void competition_stats(team tm1,team tm2,match m[200]){
 		setColor("BOLDRED");
         cout<<"Competition Stats:\n";
         setColor("RESET");
-		cout<<"1: Compare Teams\n2: Results Graph\n3: See Most\n4: Goals Times\n5: Best Solo Performance\n"
-		<<"6: Subsume Players\n7: Winners Against Loosers\n8: Back to main\n\nEnter your choice\n";
-        choice=inputChoice(1,8);
+		cout<<"1: Compare Teams\n2: Results Graph\n3: See Most Stats\n4: See Minimums Stats\n5: Goals Times\n"
+		<<"6: Best Solo Performance\n7: Subsume Players\n8: Winners Against Loosers\n"
+		<<"9: Back to main\n\nEnter your choice: ";
+        choice=inputChoice(1,9);
 		switch(choice){
 			//case 1: league.compareTeams(); break;
 			case 1: league.revCompareTeams(); break;
 			case 2: league.printGraphResults(); break;
 			case 3: league.printMost(); break;
-			case 4: league.printGoalTimes(); break;
-			case 5: league.printBestSoloPerformance(); break;
-			case 6: league.subsumePlayers(); break;
-			case 7: league.WinnerAgLooser(); break;
+			case 4: league.printMins(); break;
+			case 5: league.printGoalTimes(); break;
+			case 6: league.printBestSoloPerformance(); break;
+			case 7: league.subsumePlayers(); break;
+			case 8: league.WinnerAgLooser(); break;
 		}
-		if (choice==8) break;
+		if (choice==9) break;
 	}
 }
 
@@ -5233,6 +5774,13 @@ int choiceMatch(match *m,team tm1,team tm2){
 }
 
 void externalShowAllPrs(const char* arg){
+	if(strcmp(DATA_FILE_NAME,NULL_PATH_STRING)==0){
+		cout<<endl;
+		typeError();
+		cout<<"Save Data Not Found!"<<endl;
+		return;
+	}
+	
 	int lastPos=0;
 	for(int i=0; arg[i]!=0; i++){
 		if(arg[i]=='\\') lastPos=i;
@@ -5242,10 +5790,9 @@ void externalShowAllPrs(const char* arg){
 	int i,j;
 	for(i=lastPos+1,j=0; arg[i]!=0; i++,j++) fileName[j]=arg[i];
 	
-	
-	
-	char command[200];
-	sprintf(command,"start \"\" cmd /k \"mode con: cols=46 lines=45 & %s __players %s\"",fileName,DATA_FILE_NAME);
+	char command[150];
+	sprintf(command,"start \"\" cmd /k \"%s __players %s\"",fileName,DATA_FILE_NAME);
+	//sprintf(command,"gnome-terminal -e \"./%s __players %s\" --geometry==44x41",arg,DATA_FILE_NAME);
 	system(command);
 }
 
@@ -5323,7 +5870,19 @@ void show_game(match *m,team tm1,team tm2){
     }
 }
 
-void newTermPlayers(team tm1,team tm2,match *m){
+/*void newTermPlayers(team tm1,team tm2,match *m){
+	int numPrs1=tm1.getNumPrs();
+	int numPrs2=tm2.getNumPrs();
+	int maxNumPrs;
+	if(numPrs1>numPrs2) maxNumPrs=numPrs1;
+	else maxNumPrs=numPrs2;
+	
+	char charCommand[80];
+	sprintf(charCommand,"resize -s %d %d",maxNumPrs+6,44);
+	system(charCommand);
+	
+	system("reset");
+	
 	bool t1PrintedPrs[200];
 	bool t2PrintedPrs[200];
 	int t1Ids[200];
@@ -5375,6 +5934,7 @@ void newTermPlayers(team tm1,team tm2,match *m){
 			}
 		}
 	}
+	
 	
 	for(int i=0; tm1.getPrFromIndex(i).sendexist(); i++){
 		int Index=i;
@@ -5430,10 +5990,136 @@ void newTermPlayers(team tm1,team tm2,match *m){
 		cout<<endl;
 	}
 	ccsPrint(cadr); space(1); cadr_dash(tDash); setColor("RESET");
+}*/
+
+void newTermPlayers(team tm1,team tm2,match *m){
+	int numPrs1=tm1.getNumPrs();
+	int numPrs2=tm2.getNumPrs();
+	int maxNumPrs;
+	
+	bool t1PrintedPrs[200];
+	bool t2PrintedPrs[200];
+	stringstream t1Players[201];
+	stringstream t2Players[201];
+	
+	int t=20;
+	int tDash=42;
+	stringstream cadr;
+	
+	tm1.sortPrs("number");
+	tm2.sortPrs("number");
+	
+	if(numPrs1>numPrs2) maxNumPrs=numPrs1;
+	else maxNumPrs=numPrs2;
+	
+	char charCommand[80];
+	//sprintf(charCommand,"resize -s %d %d",maxNumPrs+6,44);
+	sprintf(charCommand,"mode con: cols=%d lines=%d",44, maxNumPrs+6);
+	system(charCommand);
+	
+	//system("reset");
+	system("cls");
+	
+	for(int i=0; 200>i; i++) t1PrintedPrs[i]=false;
+	for(int i=0; 200>i; i++) t2PrintedPrs[i]=false;
+	
+	int numGames=getNumGames(m);
+	int t1Index=0;
+	int t2Index=0;
+	for(int i=1; 3>=i && numGames-i>=0 ;i++){
+		for(int j=0; 11>j; j++){
+			if(m[numGames-i].t1_prs[j]>0){
+				int Id=m[numGames-i].t1_prs[j];
+				int Index=tm1.getPrIndexFromId(Id);
+				if(t1PrintedPrs[Index]) continue;
+				t1PrintedPrs[Index]=true;
+				t1Players[t1Index++]<<"$0MAG"<<tm1.getPrFromIndex(Index).getNumber()<<": "
+				<<tm1.getPrFromIndex(Index).sendname()<<"$0RST";
+			}
+		}
+		
+		for(int j=0; 11>j; j++){
+			if(m[numGames-i].t2_prs[j]>0){
+				int Id=m[numGames-i].t2_prs[j];
+				int Index=tm2.getPrIndexFromId(Id);
+				if(t2PrintedPrs[Index]) continue;
+				t2PrintedPrs[Index]=true;
+				t2Players[t2Index++]<<"$0CYN"<<tm2.getPrFromIndex(Index).getNumber()<<": "
+				<<tm2.getPrFromIndex(Index).sendname()<<"$0RST";
+			}
+		}
+		
+		for(int j=0; 3>j; j++){
+			if(m[numGames-i].t1_tvz[j]>0){
+				int Id=m[numGames-i].t1_tvz[j];
+				int Index=tm1.getPrIndexFromId(Id);
+				if(t1PrintedPrs[Index]) continue;
+				t1PrintedPrs[Index]=true;
+				t1Players[t1Index++]<<"$0MAG"<<tm1.getPrFromIndex(Index).getNumber()<<": "
+				<<tm1.getPrFromIndex(Index).sendname()<<"$0RST";
+			}
+		}
+		
+		for(int j=0; 3>j; j++){
+			if(m[numGames-i].t2_tvz[j]>0){
+				int Id=m[numGames-i].t2_tvz[j];
+				int Index=tm2.getPrIndexFromId(Id);
+				if(t2PrintedPrs[Index]) continue;
+				t2PrintedPrs[Index]=true;
+				t2Players[t2Index++]<<"$0CYN"<<tm2.getPrFromIndex(Index).getNumber()<<": "
+				<<tm2.getPrFromIndex(Index).sendname()<<"$0RST";
+			}
+		}
+	}
+	
+	t1Players[t1Index++]<<"$$BLU"<<"------------"<<"$0RST";
+	t2Players[t2Index++]<<"$$BLU"<<"------------"<<"$0RST";
+	
+	for(int i=0; tm1.getPrFromIndex(i).sendexist(); i++){
+		int Index=i;
+		if(t1PrintedPrs[Index]) continue;
+		t1PrintedPrs[Index]=true;
+		t1Players[t1Index++]<<"$0MAG"<<tm1.getPrFromIndex(Index).getNumber()<<": "
+		<<tm1.getPrFromIndex(Index).sendname()<<"$0RST";
+	}
+	
+	for(int i=0; tm2.getPrFromIndex(i).sendexist(); i++){
+		int Index=i;
+		if(t2PrintedPrs[Index]) continue;
+		t2PrintedPrs[Index]=true;
+		t2Players[t2Index++]<<"$0CYN"<<tm2.getPrFromIndex(Index).getNumber()<<": "
+		<<tm2.getPrFromIndex(Index).sendname()<<"$0RST";
+	}
+	
+	
+	cadr<<"$$BLU";
+	setColor("BOLDBLUE");
+	beforeStrWhere("Teams Squad List",tDash);
+	setColor("RESET");
+	cout<<endl;
+	ccsPrint(cadr); space(1); cadr_dash(tDash); setColor("RESET");
+	for(int i=0; maxNumPrs+1>i; i++){
+		
+		ccsPrint(cadr);
+		cout<<" |";
+		setColor("RESET");
+		
+		if(numPrs1+1>i) strwhere(t1Players[i],t,1);
+		else strwhere("",t,1);
+		
+		if(numPrs2+1>i) strwhere(t2Players[i],t,1);
+		else strwhere("",t,1);
+
+		ccsPrint(cadr);
+		cout<<"|";
+		setColor("RESET");
+		cout<<endl;
+	}
+	ccsPrint(cadr); space(1); cadr_dash(tDash); setColor("RESET");
 }
 
 
-void showWALTable(teamGameStat teamOne,teamGameStat teamTwo,bool showCards, bool showSubs){
+void showWALTable(teamGameStat teamOne,teamGameStat teamTwo,bool showCards, bool showSubs,bool showOv){
 	int s,t,c,ttitle;
 	stringstream ts1[14];
 	stringstream ts2[14];
@@ -5444,6 +6130,8 @@ void showWALTable(teamGameStat teamOne,teamGameStat teamTwo,bool showCards, bool
     stringstream temp4;
     stringstream temp5;
     stringstream temp6;
+	stringstream ov1,ov2;
+	stringstream ovf1,ovf2;
 	
 	bool exGoals=true;
 	bool exPossess=(teamOne.possess!=-2 && teamTwo.possess!=-2);
@@ -5456,6 +6144,10 @@ void showWALTable(teamGameStat teamOne,teamGameStat teamTwo,bool showCards, bool
 	bool exInterc=(teamOne.interc!=-2 && teamTwo.interc!=-2);
 	bool exTackles=(teamOne.tackles!=-2 && teamTwo.tackles!=-2);
 	bool exSaves=(teamOne.saves!=-2 && teamTwo.saves!=-2);
+	
+	bool exFLStrength=(teamOne.sFOverall!=-2 && teamTwo.sFOverall!=-2);
+	bool exStrength=(teamOne.sOverall!=-2 && teamTwo.sOverall!=-2);
+	
 	bool exCards=((teamOne.nCards[0]!=-2 && teamOne.nCards[1]!=-2)
 	&& (teamTwo.nCards[0]!=-2 && teamTwo.nCards[1]!=-2) && showCards);
 	bool exSubs=(teamOne.nSub!=-2 && teamTwo.nSub!=-2 && showSubs);
@@ -5497,6 +6189,11 @@ void showWALTable(teamGameStat teamOne,teamGameStat teamTwo,bool showCards, bool
 	
 	if(teamOne.nSub==-2) ts1[13]<<"UK"; else ts1[13]<<setprecision(2)<<teamOne.nSub;
 	if(teamTwo.nSub==-2) ts2[13]<<"UK"; else ts2[13]<<setprecision(2)<<teamTwo.nSub;
+	
+	if(teamOne.sOverall==-2) ov1<<"UK"; else ov1<<player::getOverallString(teamOne.sOverall);
+	if(teamTwo.sOverall==-2) ov2<<"UK"; else ov2<<player::getOverallString(teamTwo.sOverall);
+	if(teamOne.sOverall==-2) ovf1<<"UK"; else ovf1<<player::getOverallString(teamOne.sFOverall);
+	if(teamTwo.sOverall==-2) ovf2<<"UK"; else ovf2<<player::getOverallString(teamTwo.sFOverall);
 	
 	/*if(teamOne.shots[0]==-2 || teamOne.shots[1]==-2){
 		if(teamOne.shots[0]==-2 && teamOne.shots[1]==-2) ts1[2]<<"UK";
@@ -5554,6 +6251,12 @@ void showWALTable(teamGameStat teamOne,teamGameStat teamTwo,bool showCards, bool
 	if(exInterc){ space(s); cout<<"|"; strwhere(ts1[8],t); strwhere("Interception",ttitle); strwhere(ts2[8],t); ccsPrint(cadr); cout<<"|"<<endl; space(s); cadr_dash(c);}
 	if(exTackles){ space(s); cout<<"|"; strwhere(ts1[9],t); strwhere("Tackles",ttitle); strwhere(ts2[9],t); ccsPrint(cadr); cout<<"|"<<endl; space(s); cadr_dash(c);}
 	if(exSaves){ space(s); cout<<"|"; strwhere(ts1[10],t); strwhere("Saves",ttitle); strwhere(ts2[10],t); ccsPrint(cadr); cout<<"|"<<endl; space(s); cadr_dash(c);}
+	
+	if(showOv && (exFLStrength || exStrength)){
+		if(exFLStrength){ space(s); cout<<"|"; strwhere(ovf1,t); strwhere("FL Strength",ttitle); strwhere(ovf2,t); ccsPrint(cadr); cout<<"|"<<endl; space(s); cadr_dash(c);}
+		if(exStrength){ space(s); cout<<"|"; strwhere(ov1,t); strwhere("Strength",ttitle); strwhere(ov2,t); ccsPrint(cadr); cout<<"|"<<endl; space(s); cadr_dash(c);}
+	}
+		
 }
 
 void correctData(team &tm1, team &tm2, match *m,inputProfile &inpSettings){
@@ -5586,6 +6289,9 @@ void correctData(team &tm1, team &tm2, match *m,inputProfile &inpSettings){
 }
 
 
+
+
+//Input.cpp
 int stringToInt(char a[]){
     int t,out=0,zarb=1,r;
     int first;
@@ -5670,6 +6376,9 @@ bool sure(){
 }
 
 
+
+
+//Print.cpp
 void printError(const char* er){
     typeError();
     cout<<er;
@@ -5729,6 +6438,149 @@ void boldRedPrint(const char* mes){
 }
 
 
+
+
+//Team.cpp
+void team::sortPrsByDebut(match *m){
+	int selected[200];
+	for(int i=0; 200>i; i++) selected[i]=0;
+		
+	int index=0;
+	for(int i=0; m[i].sendexist() && 200>i; i++){
+		int *prs;
+		int *tvz;
+		if(id==1){
+			prs=m[i].t1_prs;
+			tvz=m[i].t1_tvz;
+		}
+		else if(id==2){
+			prs=m[i].t2_prs;
+			tvz=m[i].t2_tvz;
+		}
+		else throw -1;
+			
+		for(int j=0; 11>j; j++){
+			if(prs[j]>0){
+				if(findIndexInIntArray(prs[j],selected,200)>=0) continue;
+				else{
+					int secondInd=getPrIndexFromId(prs[j]);
+					player temp=pr[index].clone();
+					pr[index]=pr[secondInd].clone();
+					pr[secondInd]=temp;
+					selected[index]=prs[j];
+					index++;
+				}
+			}
+		}
+
+		for(int j=0; 3>j; j++){
+			if(tvz[j]>0){
+				if(findIndexInIntArray(tvz[j],selected,200)>=0) continue;
+				else{
+					int secondInd=getPrIndexFromId(tvz[j]);
+					player temp=pr[index].clone();
+					pr[index]=pr[secondInd].clone();
+					pr[secondInd]=temp;
+					selected[index]=tvz[j];
+					index++;
+				}
+			}
+		}
+	}
+}
+
+void team::showSqadList(match *m){
+	if(pr[0].sendexist()==0) cout<<"\nThis team till now have not any players\n";
+	else{
+		while(true){
+			setColor("BOLDGREEN");
+			cout<<"\nSquad List:\n";
+			setColor("RESET");
+			for(int i=0; pr[i].exist!=0; i++){
+				pr[i].namePostShow();
+				cout<<endl;
+			}
+				
+			int num=0;
+			cout<<endl;
+			setColor("BOLDRED");
+			cout<<"Next Work?"<<endl;
+			setColor("RESET");
+			cout<<++num<<": Show a Player Details\n";
+			cout<<++num<<": Sort by Numbers\n";
+			cout<<++num<<": Sort by Posts\n";
+			cout<<++num<<": Sort by Overall Ratings\n";
+			cout<<++num<<": Sort by Debut\n";
+			cout<<++num<<": Back To Team Menu\n";
+			cout<<endl<<"Enter Your Choice: ";
+			int choice=inputChoice(1,num);
+			if(choice==1){
+				show_a_player:
+				int ind;
+				cout<<endl<<"Enter Player Club Number: ";
+				ind=nextInt();
+					
+				try{
+					getPrFromNumber(ind).show();
+				}
+				catch(int ex){
+					cout<<endl<<"There is no Player with this Number!"<<endl;
+				}
+					
+				cout<<endl;
+				setColor("BOLDRED");
+				cout<<"Next Work?"<<endl;
+				setColor("RESET");
+				cout<<"1: Show Squad List\n2: Show another Player Details\n3: Back To Team Menu\n";
+				cout<<"Enter Your Choice: ";
+				int choice=inputChoice(1,3);
+				if(choice==2) goto show_a_player;
+				else if(choice==3) return;
+			}
+			else if(choice==2) sortPrs("number");
+			else if(choice==3) sortPrs("post");
+			else if(choice==4) sortPrs("overallRating",true);
+			else if(choice==5) sortPrsByDebut(m);
+			else if(choice==6) return;
+		}
+	}
+}
+
+void team::teamManage(team other,match *m){
+	int choice;
+	while(1){
+		cout<<"\n";
+		setColor("BOLDRED");
+		printname();
+		cout<<" Session:\n";
+		setColor("RESET");
+		cout<<"1: Show Team Results\n";
+		cout<<"2: Add Players\n";
+		cout<<"3: Edit Players\n";
+		cout<<"4: Change Player Numbers\n";
+		cout<<"5: Show Squad List \n";
+		cout<<"6: Show Detailed Player List\n";
+		cout<<"7: Back to main\n";
+			
+		cout<<endl<<"Enter your choice: ";
+		choice=inputChoice(1,7);
+			
+		switch(choice){
+			case 1: show(); break;
+			case 2: add_prs(other); break;
+			case 3: editPrs(other); break;
+			case 4: editPrNumbers(); break;
+			case 5: showSqadList(m); break;
+			case 6: show_det_prs(); break;
+		}
+		if (choice==7) break;
+	}
+}
+
+
+
+
+//Match.cpp
 void match::set_goals(team tm1,team tm2,bool edit){
     stringstream temp1;
     stringstream temp2;
@@ -6421,6 +7273,8 @@ void match::set_cards(team tm1,team tm2,inputProfile& inpSettings,bool edit, boo
                 
                 
         finalquest:
+        error=0;
+        
 		inptc1[0]=0; inptc1[1]=0; inptc2[0]=0; inptc2[1]=0;
 		for(int i=0; tcards>i; i++){
 			if(cards[i][2]==1){ if(cards[i][0]==1) inptc1[0]++; else if(cards[i][0]==2) inptc2[0]++;}
@@ -6870,6 +7724,7 @@ void match::update_after_game(team &tm1,team &tm2,bool silent){
 
 void match::show(team tm1,team tm2){
 	int s,t,c;
+	int maxLength;
     const int scrLength=78;
     stringstream temp1;
 	stringstream ts1[14];
@@ -6880,6 +7735,7 @@ void match::show(team tm1,team tm2){
 	stringstream att2[3];
 	stringstream cadr;
 	stringstream ov1,ov2;
+	stringstream ovf1,ovf2;
 	
 	bool pPossess=(t1_possess!=-2 || t2_possess!=-2);
 	bool pShots=(t1_shots[0]!=-2 || t2_shots[0]!=-2);
@@ -7001,20 +7857,32 @@ void match::show(team tm1,team tm2){
 			}
 		}
 		
+		double t1FirstStrength=getTeamFirstStrength(tm1);
+		double t2FirstStrength=getTeamFirstStrength(tm2);
 		double t1Strength=getTeamStrength(tm1);
 		double t2Strength=getTeamStrength(tm2);
+		
+		if(t1FirstStrength!=-2) ovf1<<"FL Strength: "<<player::getOverallString(t1FirstStrength);
+		else ovf1<<"FL Strength: "<<player::getOverallString(-2);
+		
+		if(t2FirstStrength!=-2) ovf2<<"FL Strength: "<<player::getOverallString(t2FirstStrength);
+		else ovf2<<"FL Strength: "<<player::getOverallString(-2);
 
-		if(t1Strength!=-1) ov1<<"Strength: "<<player::getOverallString(t1Strength);
+		if(t1Strength!=-2) ov1<<"Strength: "<<player::getOverallString(t1Strength);
 		else ov1<<"Strength: "<<player::getOverallString(-2);
 		
-		if(t2Strength!=-1) ov2<<"Strength: "<<player::getOverallString(t2Strength);
+		if(t2Strength!=-2) ov2<<"Strength: "<<player::getOverallString(t2Strength);
 		else ov2<<"Strength: "<<player::getOverallString(-2);
+		
+	
 		
 		cout<<endl<<endl;
 		setColor("BOLDBLUE"); beforeStrWhere("Players",scrLength); setColor("RESET");cout<<endl;
-		s=18;
-		space(s); ccsPrint(cadr); cadr_dash(42,true); setColor("RESET");cout<<endl;
-		t=20;
+		t=22; s=16;
+		maxLength=(t*2)+2;
+		
+		space(s); ccsPrint(cadr); cadr_dash(maxLength,true); setColor("RESET");cout<<endl;
+		
 		for(int i=0; 11>i; i++){
 			space(s); ccsPrint(cadr); cout<<"|"; setColor("RESET");
 			if(mom[0][1]==1 && mom[0][0]==t1_prs[i] && t1_prs[i]!=-2) setColor("BOLDYELLOW");
@@ -7025,7 +7893,7 @@ void match::show(team tm1,team tm2){
 			strwhere(ts2[i],t,1); setColor("RESET");
 			ccsPrint(cadr); cout<<"|"; setColor("RESET"); cout<<endl; 
 		}
-		space(s); ccsPrint(cadr); cadr_dash(42,true); setColor("RESET");cout<<endl;
+		space(s); ccsPrint(cadr); cadr_dash(maxLength,true); setColor("RESET");cout<<endl;
 		for(int i=11; 14>i; i++){
 			space(s); ccsPrint(cadr); cout<<"|"; setColor("RESET");
 			if(mom[0][1]==1 && mom[0][0]==t1_tvz[i-11] && t1_tvz[i-11]!=-2) setColor("BOLDYELLOW");
@@ -7036,12 +7904,17 @@ void match::show(team tm1,team tm2){
 			strwhere(ts2[i],t,1); setColor("RESET");
 			ccsPrint(cadr); cout<<"|"; setColor("RESET");cout<<endl;		
 		}
-		space(s); ccsPrint(cadr); cadr_dash(42,true); setColor("RESET");cout<<endl;
-		if(t1Strength!=-1 || t2Strength!=-1){
+		space(s); ccsPrint(cadr); cadr_dash(maxLength,true); setColor("RESET");cout<<endl;
+		if(t1FirstStrength!=-2 || t2FirstStrength!=-2){
+			space(s); ccsPrint(cadr); cout<<"|"; setColor("RESET");
+			strwhere(ovf1,t,1); strwhere(ovf2,t,1);
+			ccsPrint(cadr); cout<<"|"; setColor("RESET");cout<<endl;
+			
 			space(s); ccsPrint(cadr); cout<<"|"; setColor("RESET");
 			strwhere(ov1,t,1); strwhere(ov2,t,1);
 			ccsPrint(cadr); cout<<"|"; setColor("RESET");cout<<endl;
-			space(s); ccsPrint(cadr); cadr_dash(42,true); setColor("RESET");cout<<endl;
+			
+			space(s); ccsPrint(cadr); cadr_dash(maxLength,true); setColor("RESET");cout<<endl;
 		}
 	}
 	
@@ -7060,12 +7933,12 @@ void match::show(team tm1,team tm2){
 		}
 		cout<<endl<<endl;
 		setColor("BOLDBLUE"); beforeStrWhere("Goals",scrLength); setColor("RESET"); cout<<endl;
-		space(17); ccsPrint(cadr); cout<<"----------------------------------------------"; setColor("RESET");cout<<endl;
+		space(16); ccsPrint(cadr); cout<<"----------------------------------------------"; setColor("RESET");cout<<endl;
 		for(int i=0; tg>i; i++){
 			if(goals[i][0]==1){space(20); setColor("BOLDMAGENTA"); ccsPrint(gl[i]); setColor("RESET");cout<<endl;}
 			if(goals[i][0]==2){space(30); setColor("BOLDCYAN"); ccsPrint(gl[i]); setColor("RESET");cout<<endl;}
 		}
-		space(17); ccsPrint(cadr); cout<<"----------------------------------------------"; setColor("RESET");cout<<endl;
+		space(16); ccsPrint(cadr); cout<<"----------------------------------------------"; setColor("RESET");cout<<endl;
 	}
 	if(tcards>0 && cards[0][0]>0){
 		for(int i=0; tcards>i; i++){
@@ -7080,12 +7953,12 @@ void match::show(team tm1,team tm2){
 		}
 		cout<<endl<<endl;
 		setColor("BOLDBLUE"); beforeStrWhere("Cards",scrLength); setColor("RESET");cout<<endl;
-		space(17); ccsPrint(cadr); cout<<"----------------------------------------------"; setColor("RESET");cout<<endl;
+		space(16); ccsPrint(cadr); cout<<"----------------------------------------------"; setColor("RESET");cout<<endl;
 		for(int i=0; tcards>i; i++){
 			if(cards[i][0]==1){space(20); setColor("BOLDMAGENTA"); ccsPrint(cs[i]); setColor("RESET");cout<<endl;}
 			if(cards[i][0]==2){space(30); setColor("BOLDCYAN"); ccsPrint(cs[i]); setColor("RESET");cout<<endl;}
 		}					
-		space(17); ccsPrint(cadr); cout<<"----------------------------------------------"; setColor("RESET");cout<<endl;
+		space(16); ccsPrint(cadr); cout<<"----------------------------------------------"; setColor("RESET");cout<<endl;
                 
 	}
 	
@@ -7139,3 +8012,7 @@ void match::show(team tm1,team tm2){
 	
     showAllConfs(tm1,tm2,scrLength,60,(scrLength-60)/2,3);
 }
+
+
+
+
